@@ -445,6 +445,18 @@
     </div>
   </section>
 
+  <!-- EDIT TEXT -->
+  <section id="view-edit-text" class="view">
+    <div class="ios-navbar">
+      <button class="navbtn" id="btn-edit-text-cancel">Abbrechen</button>
+      <div class="nav-title">Text bearbeiten</div>
+      <button class="navbtn bold" id="btn-edit-text-save">Sichern</button>
+    </div>
+    <div class="panel active" style="padding:14px 16px 18px;">
+      <textarea class="textinput" id="edit-text-textarea" style="flex:1; width:100%;"></textarea>
+    </div>
+  </section>
+
   <!-- SEARCH -->
   <section id="view-search" class="view">
     <div class="ios-navbar">
@@ -468,6 +480,7 @@
   <div class="handle"></div>
   <h3>Titel</h3>
   <input type="text" class="textinput" id="sheet-title-input" placeholder="Titel des Buches" style="width:100%;">
+  <button class="ghostbtn" id="btn-edit-text" style="width:100%; padding:12px; margin-top:10px;">✎ Buchtext bearbeiten</button>
   <h3>Optik</h3>
   <div class="segmented" id="seg-theme">
     <button data-val="paper">📜 Papier</button>
@@ -830,7 +843,7 @@
       }
       card.style.color = "#F5EFE0";
       const totalPages = (book.pagesFlip && book.pagesFlip.length) || 1;
-      const pct = Math.round(((book.currentPage||0)+1) / totalPages * 100);
+      const pct = Math.max(0, Math.min(100, Math.round(((book.currentPage||0)+1) / totalPages * 100)));
       const ringOffset = 88 - (88 * Math.min(100,pct) / 100);
       card.innerHTML = `
         <div class="spine"></div>
@@ -1195,29 +1208,30 @@
     showView("view-processing");
     setProcessing("Texterkennung wird geladen…", 2);
     const textsPerPage = [];
-    try{
-      for(let i=0; i<files.length; i++){
-        if(myToken !== processingToken) return;
-        if(files.length > 1) setProcessing(`Foto ${i+1} von ${files.length}…`, Math.round((i/files.length)*100));
-        dlog("Foto " + (i+1) + ": " + files[i].name + ", " + Math.round(files[i].size/1024) + " KB");
+    const failedPhotos = [];
+    for(let i=0; i<files.length; i++){
+      if(myToken !== processingToken) return;
+      if(files.length > 1) setProcessing(`Foto ${i+1} von ${files.length}…`, Math.round((i/files.length)*100));
+      dlog("Foto " + (i+1) + ": " + files[i].name + ", " + Math.round(files[i].size/1024) + " KB");
+      try{
         const t = await ocrSingleImage(files[i], myToken);
         textsPerPage.push((t||"").trim());
+      }catch(errPhoto){
+        const msgPhoto = (errPhoto && errPhoto.message) || String(errPhoto);
+        dlog("⚠️ Foto " + (i+1) + " fehlgeschlagen: " + msgPhoto);
+        failedPhotos.push(i+1);
       }
-    }catch(err2){
-      const msg2 = (err2 && err2.message) || String(err2);
-      dlog("❌ OCR fehlgeschlagen: " + msg2);
-      if(myToken !== processingToken) return;
-      showAlertModal("Die automatische Texterkennung ist in dieser Vorschau leider blockiert.\n\nTipp: Öffne das Foto in deiner Fotos-App, halte den Text im Bild gedrückt (iOS-Textererkennung), kopiere ihn und füge ihn hier im Tab \"Text\" ein. Das Ergebnis ist dasselbe.");
-      showView("view-new");
-      return;
     }
     if(myToken !== processingToken) return;
     const text = textsPerPage.filter(Boolean).join("\n\n");
-    dlog("✅ Erkannter Text gesamt: " + text.length + " Zeichen.");
+    dlog("✅ Erkannter Text gesamt: " + text.length + " Zeichen. Fehlgeschlagen: " + failedPhotos.length);
     if(!text){
-      showAlertModal("Es wurde kein Text erkannt.");
+      showAlertModal("Die automatische Texterkennung ist in dieser Vorschau leider blockiert (oder es wurde kein Text erkannt).\n\nTipp: Öffne das Foto in deiner Fotos-App, halte den Text im Bild gedrückt (iOS-Textererkennung), kopiere ihn und füge ihn hier im Tab \"Text\" ein. Das Ergebnis ist dasselbe.");
       showView("view-new");
       return;
+    }
+    if(failedPhotos.length > 0){
+      showAlertModal("Hinweis: Bei " + failedPhotos.length + " von " + files.length + " Foto(s) (Nr. " + failedPhotos.join(", ") + ") ist die Texterkennung fehlgeschlagen. Die übrigen Seiten wurden erfolgreich erkannt und übernommen — die fehlenden kannst du im nächsten Schritt manuell ergänzen.");
     }
     openReview(text, guessTitle(text), "photo");
   });
@@ -1624,6 +1638,29 @@
     persistBookProgress();
   });
 
+  /* ---------------- Buchtext bearbeiten ---------------- */
+  document.getElementById("btn-edit-text").addEventListener("click", ()=>{
+    if(!currentBook) return;
+    closeSheet();
+    document.getElementById("edit-text-textarea").value = currentBook.rawText;
+    showView("view-edit-text");
+    setTimeout(()=>document.getElementById("edit-text-textarea").focus(), 100);
+  });
+  document.getElementById("btn-edit-text-cancel").addEventListener("click", ()=>{
+    showView("view-reader");
+  });
+  document.getElementById("btn-edit-text-save").addEventListener("click", ()=>{
+    if(!currentBook) return;
+    const newText = document.getElementById("edit-text-textarea").value.trim();
+    if(!newText){ showAlertModal("Der Text darf nicht leer sein."); return; }
+    currentBook.rawText = newText;
+    currentBook.pagesFlip = null;
+    currentBook.currentPage = 0;
+    persistBookProgress();
+    showView("view-reader");
+    requestAnimationFrame(()=>{ requestAnimationFrame(rebuildPagination); });
+  });
+
   document.getElementById("seg-theme").addEventListener("click", e=>{
     const btn = e.target.closest("button"); if(!btn) return;
     settings.theme = btn.dataset.val;
@@ -1851,6 +1888,26 @@
     const pages = currentBook.pagesFlip || [""];
     return pages[currentBook.currentPage] || "";
   }
+  function ttsLangCode(){
+    // Grob aus der zuletzt gewählten OCR-Sprache abgeleitet
+    if(ocrLang.indexOf("hrv") !== -1) return "hr-HR";
+    if(ocrLang.indexOf("deu") !== -1) return "de-DE";
+    if(ocrLang.indexOf("eng") !== -1) return "en-US";
+    return "de-DE";
+  }
+  function pickVoiceFor(langCode){
+    if(!("speechSynthesis" in window)) return null;
+    const voices = window.speechSynthesis.getVoices() || [];
+    const short = langCode.split("-")[0];
+    return voices.find(v=>v.lang && v.lang.toLowerCase()===langCode.toLowerCase())
+        || voices.find(v=>v.lang && v.lang.toLowerCase().startsWith(short))
+        || null;
+  }
+  let voicesReady = false;
+  if("speechSynthesis" in window){
+    window.speechSynthesis.onvoiceschanged = ()=>{ voicesReady = true; };
+  }
+
   document.getElementById("btn-tts").addEventListener("click", ()=>{
     if(!("speechSynthesis" in window)){
       showAlertModal("Vorlesen wird von diesem Browser leider nicht unterstützt.");
@@ -1864,12 +1921,20 @@
     }
     const text = currentPageText();
     if(!text){ showAlertModal("Diese Seite enthält keinen Text zum Vorlesen."); return; }
+    const langCode = ttsLangCode();
+    const voice = pickVoiceFor(langCode);
     const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = voice ? voice.lang : langCode;
+    if(voice) utter.voice = voice;
+    utter.rate = 0.95;
     utter.onend = ()=>{ ttsSpeaking = false; document.getElementById("btn-tts").textContent = "🔊"; };
     utter.onerror = ()=>{ ttsSpeaking = false; document.getElementById("btn-tts").textContent = "🔊"; };
     window.speechSynthesis.speak(utter);
     ttsSpeaking = true;
     document.getElementById("btn-tts").textContent = "⏹️";
+    if(langCode === "hr-HR" && !voice){
+      showAlertModal("Hinweis: Auf diesem Gerät ist keine kroatische Sprachausgabe-Stimme installiert. iOS liest den Text daher mit einer anderen Stimme (Aussprache dadurch ungenau).\n\nPrüfen/installieren unter: Einstellungen → Bedienungshilfen → Gesprochener Inhalt → Stimmen → Kroatisch (falls dort verfügbar).");
+    }
   });
 
   /* ---------------- Page notes ---------------- */
