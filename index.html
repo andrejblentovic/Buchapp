@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Lesestube</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lesestube">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2F6B4F">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Lesestube%22%2C%22short_name%22%3A%22Lesestube%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23121110%22%2C%22theme_color%22%3A%22%232F6B4F%22%7D">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%232F6B4F%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2268%22%20font-size%3D%2258%22%20font-family%3D%22Georgia%2Cserif%22%20fill%3D%22%23F4F1EA%22%20text-anchor%3D%22middle%22%3EL%3C%2Ftext%3E%3C%2Fsvg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
@@ -75,6 +82,15 @@
     --shadow: rgba(15,15,20,0.32);
     --font-body: var(--sf);
   }
+  html[data-theme="sepia"]{
+    --page-bg: #EFDDBB;
+    --page-bg-2: #E6D0A6;
+    --ink: #4A2F1C;
+    --ink-soft: #8A6A47;
+    --line: rgba(74,47,28,0.18);
+    --shadow: rgba(60,38,14,0.4);
+    --font-body: var(--serif);
+  }
   @media (prefers-color-scheme: dark){
     html[data-theme="modern"]{
       --page-bg: #1C1C1E;
@@ -134,6 +150,14 @@
   .large-title::after{ content:""; display:block; width:46px; height:3px; margin-top:10px; border-radius:2px; background:linear-gradient(90deg, var(--ios-tint), var(--ios-gold)); }
   .lib-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .section-header{ font-size:12px; font-weight:600; color:var(--ios-secondary); text-transform:uppercase; letter-spacing:.09em; padding:16px 22px 10px; }
+  .section-header-row{ display:flex; align-items:center; justify-content:space-between; padding-right:10px; }
+  .filter-row{ display:flex; gap:8px; overflow-x:auto; padding:4px 20px 2px; -webkit-overflow-scrolling:touch; }
+  .filter-chip{ flex-shrink:0; border:none; background:var(--ios-fill); color:var(--ios-label); font-size:13px; font-weight:600; padding:7px 14px; border-radius:16px; opacity:.75; }
+  .filter-chip.active{ background:var(--ios-tint); color:#fff; opacity:1; }
+  .progress-ring{ position:absolute; top:8px; right:8px; width:30px; height:30px; }
+  .progress-ring circle{ fill:none; stroke-width:3; }
+  .progress-ring .ring-bg{ stroke:rgba(255,255,255,0.25); }
+  .progress-ring .ring-fg{ stroke:#fff; stroke-linecap:round; transform:rotate(-90deg); transform-origin:50% 50%; }
 
   /* ---------- Shelf: Penguin-style initial covers on wooden ledges ---------- */
   .shelf{ padding:2px 20px 48px; display:grid; grid-template-columns:repeat(2,1fr); gap:26px 18px; }
@@ -167,7 +191,9 @@
   .book-card .progress::before{ content:""; width:26px; height:3px; border-radius:2px; background:rgba(255,252,240,0.35); box-shadow:inset 0 0 0 100px transparent; }
   .book-card .del{ position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; border:none; background:rgba(0,0,0,0.38); color:#fff; font-size:12px; display:none; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
   .book-card .rename{ position:absolute; top:6px; left:6px; width:24px; height:24px; border-radius:50%; border:none; background:rgba(0,0,0,0.38); color:#fff; font-size:11px; display:none; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
-  .book-card.editing .del, .book-card.editing .rename{ display:flex; }
+  .book-card .cover-btn{ position:absolute; top:6px; left:34px; width:24px; height:24px; border-radius:50%; border:none; background:rgba(0,0,0,0.38); color:#fff; font-size:11px; display:none; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .book-card.editing .del, .book-card.editing .rename, .book-card.editing .cover-btn{ display:flex; }
+  .book-card.editing .progress-ring{ display:none; }
   .book-card.editing{ animation:wiggle .28s ease-in-out infinite alternate; }
   @keyframes wiggle{ from{ transform:rotate(-0.6deg);} to{ transform:rotate(0.6deg);} }
 
@@ -199,9 +225,9 @@
 
   /* ---------- Reader ---------- */
   .reader-top{ display:flex; align-items:center; justify-content:space-between; padding:calc(var(--safe-top) + 6px) 6px 6px; z-index:20; background:var(--ios-navbar-bg); -webkit-backdrop-filter:saturate(180%) blur(22px); backdrop-filter:saturate(180%) blur(22px); border-bottom:0.5px solid var(--ios-separator); }
-  .reader-title{ font-family:var(--serif); font-size:14px; font-weight:600; color:var(--ios-secondary); max-width:34%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; }
+  .reader-title{ font-family:var(--serif); font-size:13px; font-weight:600; color:var(--ios-secondary); max-width:22%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; }
   .reader-actions{ display:flex; align-items:center; gap:0; }
-  .aa-btn{ border:none; background:transparent; color:var(--ios-blue); font-size:17px; font-weight:600; padding:6px 10px; cursor:pointer; }
+  .aa-btn{ border:none; background:transparent; color:var(--ios-blue); font-size:17px; font-weight:600; padding:6px 7px; cursor:pointer; }
   .back-btn{ border:none; background:transparent; color:var(--ios-blue); font-size:17px; padding:6px 8px 6px 4px; display:flex; align-items:center; gap:2px; cursor:pointer; }
   mark{ background:rgba(185,138,60,0.42); color:inherit; border-radius:3px; padding:0 1px; }
 
@@ -277,12 +303,20 @@
     <div class="large-title-header">
       <div class="large-title-row">
         <button class="navbtn" id="btn-edit-shelf">Bearbeiten</button>
-        <button class="navbtn bold" id="btn-new">Neu +</button>
+        <div style="display:flex; align-items:center;">
+          <button class="navbtn" id="btn-random-book" title="Zufälliges Buch">🎲</button>
+          <button class="navbtn" id="btn-backup" title="Sichern / Wiederherstellen">⇅</button>
+          <button class="navbtn bold" id="btn-new">Neu +</button>
+        </div>
       </div>
       <div class="large-title">Bibliothek</div>
+      <div class="filter-row" id="filter-row"></div>
     </div>
     <div class="lib-scroll" id="lib-scroll">
-      <div class="section-header" id="shelf-section-header">MEINE BÜCHER</div>
+      <div class="section-header-row">
+        <div class="section-header" id="shelf-section-header">MEINE BÜCHER</div>
+        <button class="navbtn" id="btn-sort" style="font-size:13px; padding:6px 8px;">Sortieren ⌄</button>
+      </div>
       <div class="shelf" id="shelf"></div>
     </div>
   </section>
@@ -301,13 +335,20 @@
     </div>
 
     <div class="panel active" id="panel-photo">
-      <div class="dropzone">
+      <div class="field-label" style="margin-top:2px;">Sprache der Texterkennung</div>
+      <div class="segmented" id="seg-ocr-lang">
+        <button data-val="hrv+deu+eng">HR/DE/EN</button>
+        <button data-val="deu">Deutsch</button>
+        <button data-val="eng">Englisch</button>
+        <button data-val="hrv">Kroatisch</button>
+      </div>
+      <div class="dropzone" style="margin-top:12px;">
         <div class="emoji">📷</div>
-        <div>Foto einer Buchseite oder eines Dokuments aufnehmen. Der Text wird automatisch erkannt.</div>
-        <button class="bigbtn" id="btn-take-photo">Foto aufnehmen / wählen</button>
+        <div>Ein oder mehrere Fotos von Buchseiten aufnehmen. Der Text wird automatisch erkannt und zu einem Buch zusammengefügt.</div>
+        <button class="bigbtn" id="btn-take-photo">Foto(s) aufnehmen / wählen</button>
         <div style="font-size:12px; line-height:1.45; opacity:.75; max-width:320px;">Tipp: Falls die Erkennung hier nicht klappt, kannst du den Text auch in der Fotos-App im Bild gedrückt halten, kopieren und im Tab „Text" einfügen.</div>
       </div>
-      <input type="file" accept="image/*" id="file-photo" style="display:none">
+      <input type="file" accept="image/*" id="file-photo" multiple style="display:none">
     </div>
 
     <div class="panel" id="panel-pdf">
@@ -378,6 +419,9 @@
       <button class="back-btn" id="btn-reader-back">‹ Bibliothek</button>
       <div class="reader-title" id="reader-title"></div>
       <div class="reader-actions">
+        <button class="aa-btn" id="btn-chapters" style="font-size:15px;">☰</button>
+        <button class="aa-btn" id="btn-tts" style="font-size:15px;">🔊</button>
+        <button class="aa-btn" id="btn-note" style="font-size:15px;">📝</button>
         <button class="aa-btn" id="btn-search">🔍</button>
         <button class="aa-btn" id="btn-settings">Aa</button>
       </div>
@@ -426,7 +470,8 @@
   <input type="text" class="textinput" id="sheet-title-input" placeholder="Titel des Buches" style="width:100%;">
   <h3>Optik</h3>
   <div class="segmented" id="seg-theme">
-    <button data-val="paper">📜 Papierbuch</button>
+    <button data-val="paper">📜 Papier</button>
+    <button data-val="sepia">🟤 Sepia</button>
     <button data-val="modern">📱 Modern</button>
   </div>
   <h3>Lese-Modus</h3>
@@ -449,6 +494,10 @@
   <div class="handle"></div>
   <h3 id="mini-title">Titel</h3>
   <input type="text" class="textinput" id="mini-input" style="width:100%;">
+  <div id="mini-category-wrap" style="display:none;">
+    <h3>Kategorie</h3>
+    <input type="text" class="textinput" id="mini-category-input" placeholder="z. B. Gebete, Romane…" style="width:100%;">
+  </div>
   <p id="mini-message" style="display:none; font-size:16px; line-height:1.4; color:var(--ios-label); margin:2px 2px 0;"></p>
   <div class="row-end" style="padding-top:16px;">
     <button class="ghostbtn" id="mini-cancel">Abbrechen</button>
@@ -456,8 +505,53 @@
   </div>
 </div>
 
+<!-- BACKUP -->
+<div class="sheet-backdrop" id="backup-backdrop"></div>
+<div class="sheet" id="backup-sheet">
+  <div class="handle"></div>
+  <h3>Bibliothek sichern</h3>
+  <button class="bigbtn" id="btn-export" style="margin-bottom:10px;">⬇️ Als Datei exportieren</button>
+  <button class="ghostbtn" id="btn-import" style="width:100%; padding:14px;">⬆️ Aus Datei wiederherstellen</button>
+  <p style="font-size:12px; color:var(--ios-secondary); margin:14px 2px 4px; line-height:1.4;">Deine Bücher sind nur auf diesem Gerät gespeichert. Exportiere regelmäßig eine Sicherung, besonders vor einem Gerätewechsel.</p>
+</div>
+<input type="file" accept="application/json" id="file-import" style="display:none">
+<input type="file" accept="image/*" id="file-cover" style="display:none">
+
+<!-- SORT -->
+<div class="sheet-backdrop" id="sort-backdrop"></div>
+<div class="sheet" id="sort-sheet">
+  <div class="handle"></div>
+  <h3>Sortieren nach</h3>
+  <div class="segmented" id="seg-sort">
+    <button data-val="recent">Neueste</button>
+    <button data-val="title">Titel</button>
+    <button data-val="progress">Fortschritt</button>
+  </div>
+</div>
+
+<!-- CHAPTERS -->
+<div class="sheet-backdrop" id="chapters-backdrop"></div>
+<div class="sheet" id="chapters-sheet">
+  <div class="handle"></div>
+  <h3>Kapitel</h3>
+  <div id="chapters-list" style="max-height:50vh; overflow-y:auto;"></div>
+</div>
+
+<!-- NOTE -->
+<div class="sheet-backdrop" id="note-backdrop"></div>
+<div class="sheet" id="note-sheet">
+  <div class="handle"></div>
+  <h3>Notiz zu dieser Seite</h3>
+  <textarea class="textinput" id="note-input" style="width:100%; min-height:110px;" placeholder="Notiz eingeben…"></textarea>
+  <div class="row-end" style="padding-top:14px;">
+    <button class="ghostbtn" id="btn-note-delete">Löschen</button>
+    <button class="bigbtn" id="btn-note-save" style="width:auto; padding:12px 24px;">Sichern</button>
+  </div>
+</div>
+
 <!-- DIAGNOSTICS -->
 <button id="btn-debug" title="Diagnose">🐞</button>
+
 <div id="debug-overlay">
   <div class="debug-head">
     <strong>Diagnose-Log</strong>
@@ -576,7 +670,7 @@
     miniBackdrop.classList.remove("show");
     miniOnConfirm = null;
   }
-  function showRenameModal(currentTitle, onConfirm){
+  function showRenameModal(currentTitle, onConfirm, currentCategory){
     miniTitle.textContent = "Umbenennen";
     miniInput.style.display = "block";
     miniInput.value = currentTitle;
@@ -584,9 +678,17 @@
     miniCancelBtn.style.display = "";
     miniConfirmBtn.textContent = "Sichern";
     miniConfirmBtn.classList.remove("navbtn"); miniConfirmBtn.style.color = "";
+    const catWrap = document.getElementById("mini-category-wrap");
+    const catInput = document.getElementById("mini-category-input");
+    if(currentCategory !== undefined){
+      catWrap.style.display = "block";
+      catInput.value = currentCategory || "";
+    } else {
+      catWrap.style.display = "none";
+    }
     miniOnConfirm = ()=>{
       const v = miniInput.value.trim();
-      if(v) onConfirm(v);
+      if(v) onConfirm(v, catInput.value.trim());
     };
     miniBackdrop.classList.add("show"); miniSheet.classList.add("show");
     setTimeout(()=>{ miniInput.focus(); miniInput.select(); }, 60);
@@ -594,6 +696,7 @@
   function showConfirmModal(message, confirmLabel, onConfirm){
     miniTitle.textContent = "Bestätigen";
     miniInput.style.display = "none";
+    document.getElementById("mini-category-wrap").style.display = "none";
     miniMessage.style.display = "block";
     miniMessage.textContent = message;
     miniCancelBtn.style.display = "";
@@ -604,6 +707,7 @@
   function showAlertModal(message, onOk){
     miniTitle.textContent = "Hinweis";
     miniInput.style.display = "none";
+    document.getElementById("mini-category-wrap").style.display = "none";
     miniMessage.style.display = "block";
     miniMessage.textContent = message;
     miniCancelBtn.style.display = "none";
@@ -651,18 +755,56 @@
   /* ---------------- Library ---------------- */
   const shelf = document.getElementById("shelf");
   let shelfEditing = false;
+  let activeFilterCategory = "__all__";
+  let sortMode = localStorage.getItem("lesestube_sort") || "recent";
+  let pendingCoverBookId = null;
 
   const COVER_PALETTES = {
     paper: ["#2F5D46","#7A3B2E","#31506B","#6E5427","#553B5E","#3E5C55"],
+    sepia: ["#8A5A2A","#6E4423","#9C6B32","#7A4E28","#5C3D22","#8F6238"],
     modern: ["#1F5C49","#274B72","#8A4B2A","#5C3168","#28524E","#704A24"]
   };
 
+  function renderFilterChips(){
+    const row = document.getElementById("filter-row");
+    const cats = Array.from(new Set(books.map(b=>b.category).filter(Boolean))).sort();
+    if(cats.length === 0){ row.innerHTML = ""; row.style.display = "none"; return; }
+    row.style.display = "flex";
+    const chips = ["__all__", ...cats];
+    row.innerHTML = chips.map(c=>{
+      const label = c === "__all__" ? "Alle" : escapeHtml(c);
+      const active = activeFilterCategory === c ? " active" : "";
+      return `<button class="filter-chip${active}" data-cat="${escapeHtml(c)}">${label}</button>`;
+    }).join("");
+    row.querySelectorAll(".filter-chip").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        activeFilterCategory = btn.dataset.cat;
+        renderShelf();
+      });
+    });
+  }
+
+  function sortBooks(list){
+    const arr = list.slice();
+    if(sortMode === "title") arr.sort((a,b)=>a.title.localeCompare(b.title, "de"));
+    else if(sortMode === "progress"){
+      arr.sort((a,b)=>{
+        const pa = ((a.currentPage||0)+1) / ((a.pagesFlip&&a.pagesFlip.length)||1);
+        const pb = ((b.currentPage||0)+1) / ((b.pagesFlip&&b.pagesFlip.length)||1);
+        return pb - pa;
+      });
+    } else arr.reverse(); // recent = newest first (creation order reversed)
+    return arr;
+  }
+
   function renderShelf(){
     shelf.innerHTML = "";
+    renderFilterChips();
     const sectionHeader = document.getElementById("shelf-section-header");
     if(books.length === 0){
       shelf.style.display = "none";
       sectionHeader.style.display = "none";
+      document.getElementById("filter-row").style.display = "none";
       if(!document.getElementById("empty-state")) createEmptyState();
       return;
     }
@@ -670,27 +812,44 @@
     if(es) es.remove();
     sectionHeader.style.display = "block";
     shelf.style.display = "grid";
-    books.slice().reverse().forEach(book=>{
+    let visibleBooks = books;
+    if(activeFilterCategory !== "__all__"){
+      visibleBooks = books.filter(b=>b.category === activeFilterCategory);
+    }
+    sortBooks(visibleBooks).forEach(book=>{
       const card = document.createElement("div");
       card.className = "book-card" + (shelfEditing ? " editing" : "");
       const palette = COVER_PALETTES[book.theme] || COVER_PALETTES.paper;
       const color = palette[Math.abs(hashCode(book.id)) % palette.length];
-      card.style.background = `linear-gradient(160deg, ${color}, ${shade(color,-18)})`;
+      if(book.coverImage){
+        card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.35)), url(${book.coverImage})`;
+        card.style.backgroundSize = "cover";
+        card.style.backgroundPosition = "center";
+      } else {
+        card.style.background = `linear-gradient(160deg, ${color}, ${shade(color,-18)})`;
+      }
       card.style.color = "#F5EFE0";
       const totalPages = (book.pagesFlip && book.pagesFlip.length) || 1;
       const pct = Math.round(((book.currentPage||0)+1) / totalPages * 100);
+      const ringOffset = 88 - (88 * Math.min(100,pct) / 100);
       card.innerHTML = `
         <div class="spine"></div>
-        <div class="initial">${escapeHtml((book.title||"?").trim().charAt(0).toUpperCase())}</div>
+        ${book.coverImage ? "" : `<div class="initial">${escapeHtml((book.title||"?").trim().charAt(0).toUpperCase())}</div>`}
+        <svg class="progress-ring" viewBox="0 0 32 32">
+          <circle class="ring-bg" cx="16" cy="16" r="14"></circle>
+          <circle class="ring-fg" cx="16" cy="16" r="14" stroke-dasharray="88" stroke-dashoffset="${ringOffset}"></circle>
+        </svg>
         <div class="cover-inner">
           <div class="title">${escapeHtml(book.title)}</div>
           <div>
+            ${book.category ? `<div class="progress" style="opacity:.8; font-weight:400;">${escapeHtml(book.category)}</div>` : ""}
             <div class="progress">${pct}% gelesen</div>
             <div class="meta">${formatDate(book.createdAt)}</div>
           </div>
         </div>
         <button class="del">✕</button>
         <button class="rename">✎</button>
+        <button class="cover-btn">🖼️</button>
       `;
       card.querySelector(".del").addEventListener("click",(e)=>{
         e.stopPropagation();
@@ -702,11 +861,17 @@
       });
       card.querySelector(".rename").addEventListener("click",(e)=>{
         e.stopPropagation();
-        showRenameModal(book.title, (newTitle)=>{
+        showRenameModal(book.title, (newTitle, newCategory)=>{
           book.title = newTitle;
+          book.category = newCategory || "";
           saveBooks(books);
           renderShelf();
-        });
+        }, book.category || "");
+      });
+      card.querySelector(".cover-btn").addEventListener("click",(e)=>{
+        e.stopPropagation();
+        pendingCoverBookId = book.id;
+        document.getElementById("file-cover").click();
       });
       card.addEventListener("click",()=>{
         if(shelfEditing) return;
@@ -750,6 +915,114 @@
   });
   document.getElementById("btn-new-back").addEventListener("click",()=>showView("view-library"));
   document.getElementById("btn-review-back").addEventListener("click",()=>showView("view-new"));
+
+  /* ---------------- Random book ---------------- */
+  document.getElementById("btn-random-book").addEventListener("click", ()=>{
+    if(books.length === 0){ showAlertModal("Noch keine Bücher in der Bibliothek."); return; }
+    const pick = books[Math.floor(Math.random()*books.length)];
+    openReader(pick.id);
+  });
+
+  /* ---------------- Sort sheet ---------------- */
+  const sortBackdrop = document.getElementById("sort-backdrop");
+  const sortSheet = document.getElementById("sort-sheet");
+  document.getElementById("btn-sort").addEventListener("click", ()=>{
+    document.getElementById("seg-sort").querySelectorAll("button").forEach(b=>b.classList.toggle("active", b.dataset.val===sortMode));
+    sortBackdrop.classList.add("show"); sortSheet.classList.add("show");
+  });
+  sortBackdrop.addEventListener("click", ()=>{ sortBackdrop.classList.remove("show"); sortSheet.classList.remove("show"); });
+  document.getElementById("seg-sort").addEventListener("click", e=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    sortMode = btn.dataset.val;
+    localStorage.setItem("lesestube_sort", sortMode);
+    renderShelf();
+    sortBackdrop.classList.remove("show"); sortSheet.classList.remove("show");
+  });
+
+  /* ---------------- Backup / Export / Import ---------------- */
+  const backupBackdrop = document.getElementById("backup-backdrop");
+  const backupSheet = document.getElementById("backup-sheet");
+  document.getElementById("btn-backup").addEventListener("click", ()=>{
+    backupBackdrop.classList.add("show"); backupSheet.classList.add("show");
+  });
+  backupBackdrop.addEventListener("click", ()=>{ backupBackdrop.classList.remove("show"); backupSheet.classList.remove("show"); });
+  document.getElementById("btn-export").addEventListener("click", ()=>{
+    const payload = { exportedAt: new Date().toISOString(), books, settings };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lesestube-sicherung-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  });
+  document.getElementById("btn-import").addEventListener("click", ()=>{
+    document.getElementById("file-import").click();
+  });
+  document.getElementById("file-import").addEventListener("change", async (e)=>{
+    const file = e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const incoming = Array.isArray(data.books) ? data.books : Array.isArray(data) ? data : null;
+      if(!incoming) throw new Error("Ungültiges Format.");
+      let added = 0;
+      incoming.forEach(b=>{
+        if(!b || !b.id) return;
+        if(books.some(existing=>existing.id === b.id)){
+          b.id = "b_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);
+        }
+        books.push(b);
+        added++;
+      });
+      saveBooks(books);
+      renderShelf();
+      backupBackdrop.classList.remove("show"); backupSheet.classList.remove("show");
+      showAlertModal(added + " Buch/Bücher erfolgreich wiederhergestellt.");
+    }catch(err){
+      showAlertModal("Datei konnte nicht gelesen werden: " + ((err&&err.message)||err));
+    }
+  });
+
+  /* ---------------- Custom cover photo ---------------- */
+  document.getElementById("file-cover").addEventListener("change", async (e)=>{
+    const file = e.target.files[0];
+    e.target.value = "";
+    if(!file || !pendingCoverBookId) return;
+    try{
+      const dataUrl = await new Promise((res, rej)=>{
+        const r = new FileReader();
+        r.onload = ()=>res(r.result);
+        r.onerror = ()=>rej(new Error("Bild konnte nicht gelesen werden."));
+        r.readAsDataURL(file);
+      });
+      const img = await new Promise((res, rej)=>{
+        const im = new Image();
+        im.onload = ()=>res(im);
+        im.onerror = ()=>rej(new Error("Bild ungültig."));
+        im.src = dataUrl;
+      });
+      const maxDim = 500;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width*scale);
+      canvas.height = Math.round(img.height*scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      const book = books.find(b=>b.id===pendingCoverBookId);
+      if(book){
+        book.coverImage = canvas.toDataURL("image/jpeg", 0.8);
+        saveBooks(books);
+        renderShelf();
+      }
+    }catch(err){
+      showAlertModal("Cover konnte nicht gesetzt werden: " + ((err&&err.message)||err));
+    }
+    pendingCoverBookId = null;
+  });
 
   function resetNewBookForm(){
     document.getElementById("input-title").value = "";
@@ -864,15 +1137,15 @@
   }
 
   // Fallback: Tesseract (funktioniert außerhalb der Claude-Vorschau, z. B. in Safari/Chrome)
-  async function ocrViaTesseract(file, myToken){
-    dlog("Fallback: OCR via Tesseract…");
+  async function ocrViaTesseract(file, myToken, lang){
+    dlog("Fallback: OCR via Tesseract… Sprache: " + lang);
     let tessWorkerPath = "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/worker.min.js";
     try{
       const blob = new Blob(['importScripts("'+tessWorkerPath+'");'], {type:"text/javascript"});
       tessWorkerPath = URL.createObjectURL(blob);
     }catch(e){ /* CDN-URL direkt nutzen */ }
     const result = await withTimeout(
-      Tesseract.recognize(file, "deu+eng", {
+      Tesseract.recognize(file, lang || "hrv+deu+eng", {
         workerPath: tessWorkerPath,
         logger: m=>{
           if(myToken !== processingToken) return;
@@ -889,38 +1162,63 @@
     return (result.data.text || "").trim();
   }
 
-  document.getElementById("btn-take-photo").addEventListener("click",()=>document.getElementById("file-photo").click());
-  document.getElementById("file-photo").addEventListener("change", async (e)=>{
-    const file = e.target.files[0];
-    e.target.value = "";
-    if(!file) return;
-    dlog("―――――――――――――――――――――");
-    dlog("Foto ausgewählt: " + file.name + ", " + Math.round(file.size/1024) + " KB, Typ: " + file.type);
-    const myToken = ++processingToken;
-    showView("view-processing");
-    setProcessing("Texterkennung wird geladen…", 2);
+  let ocrLang = localStorage.getItem("lesestube_ocr_lang") || "hrv+deu+eng";
+  document.getElementById("seg-ocr-lang").querySelectorAll("button").forEach(b=>b.classList.toggle("active", b.dataset.val===ocrLang));
+  document.getElementById("seg-ocr-lang").addEventListener("click", e=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    ocrLang = btn.dataset.val;
+    localStorage.setItem("lesestube_ocr_lang", ocrLang);
+    document.getElementById("seg-ocr-lang").querySelectorAll("button").forEach(b=>b.classList.toggle("active", b===btn));
+  });
+
+  async function ocrSingleImage(file, myToken){
     let text = null;
-    // 1. Versuch: Claude Vision (funktioniert in der Claude-Vorschau)
     try{
       text = await withTimeout(ocrViaClaude(file), 60000, "Die Texterkennung hat zu lange gedauert (Timeout nach 60s).");
     }catch(err1){
       const msg1 = (err1 && err1.message) || String(err1);
       dlog("⚠️ Claude-OCR fehlgeschlagen: " + msg1 + " — versuche Tesseract-Fallback…");
-      if(myToken !== processingToken) return;
-      // 2. Versuch: Tesseract (funktioniert in normalen Browsern außerhalb der Vorschau)
-      try{
-        text = await ocrViaTesseract(file, myToken);
-      }catch(err2){
-        const msg2 = (err2 && err2.message) || String(err2);
-        dlog("❌ Beide OCR-Wege fehlgeschlagen. Tesseract: " + msg2);
+      if(myToken !== processingToken) throw new Error("Abgebrochen");
+      text = await ocrViaTesseract(file, myToken, ocrLang);
+    }
+    return text;
+  }
+
+  document.getElementById("btn-take-photo").addEventListener("click",()=>document.getElementById("file-photo").click());
+  document.getElementById("file-photo").addEventListener("change", async (e)=>{
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if(files.length === 0) return;
+    dlog("―――――――――――――――――――――");
+    dlog(files.length + " Foto(s) ausgewählt.");
+    const myToken = ++processingToken;
+    showView("view-processing");
+    setProcessing("Texterkennung wird geladen…", 2);
+    const textsPerPage = [];
+    try{
+      for(let i=0; i<files.length; i++){
         if(myToken !== processingToken) return;
-        showAlertModal("Die automatische Texterkennung ist in dieser Vorschau leider blockiert.\n\nTipp: Öffne das Foto in deiner Fotos-App, halte den Text im Bild gedrückt (iOS-Textererkennung), kopiere ihn und füge ihn hier im Tab \"Text\" ein. Das Ergebnis ist dasselbe.");
-        showView("view-new");
-        return;
+        if(files.length > 1) setProcessing(`Foto ${i+1} von ${files.length}…`, Math.round((i/files.length)*100));
+        dlog("Foto " + (i+1) + ": " + files[i].name + ", " + Math.round(files[i].size/1024) + " KB");
+        const t = await ocrSingleImage(files[i], myToken);
+        textsPerPage.push((t||"").trim());
       }
+    }catch(err2){
+      const msg2 = (err2 && err2.message) || String(err2);
+      dlog("❌ OCR fehlgeschlagen: " + msg2);
+      if(myToken !== processingToken) return;
+      showAlertModal("Die automatische Texterkennung ist in dieser Vorschau leider blockiert.\n\nTipp: Öffne das Foto in deiner Fotos-App, halte den Text im Bild gedrückt (iOS-Textererkennung), kopiere ihn und füge ihn hier im Tab \"Text\" ein. Das Ergebnis ist dasselbe.");
+      showView("view-new");
+      return;
     }
     if(myToken !== processingToken) return;
-    dlog("✅ Erkannter Text: " + (text||"").length + " Zeichen.");
+    const text = textsPerPage.filter(Boolean).join("\n\n");
+    dlog("✅ Erkannter Text gesamt: " + text.length + " Zeichen.");
+    if(!text){
+      showAlertModal("Es wurde kein Text erkannt.");
+      showView("view-new");
+      return;
+    }
     openReview(text, guessTitle(text), "photo");
   });
 
@@ -969,7 +1267,22 @@
         setProcessing(`Lese Seite ${i} von ${pdf.numPages}…`, Math.round(i/pdf.numPages*100));
         const page = await withTimeout(pdf.getPage(i), 20000, "Zeitüberschreitung beim Lesen von Seite " + i + ".");
         const content = await withTimeout(page.getTextContent(), 20000, "Zeitüberschreitung beim Textauslesen von Seite " + i + ".");
-        const pageText = content.items.map(it=>it.str).join(" ");
+        let pageText = content.items.map(it=>it.str).join(" ").trim();
+        // Vermutlich eine gescannte (Bild-)Seite ohne eingebetteten Text → OCR versuchen
+        if(pageText.length < 8){
+          try{
+            setProcessing(`Seite ${i}: erkenne gescannten Text…`, Math.round(i/pdf.numPages*100));
+            const viewport = page.getViewport({scale: 1.6});
+            const canvas = document.createElement("canvas");
+            canvas.width = viewport.width; canvas.height = viewport.height;
+            await page.render({canvasContext: canvas.getContext("2d"), viewport}).promise;
+            const blob = await new Promise(res=>canvas.toBlob(res, "image/jpeg", 0.85));
+            if(blob){
+              const ocrText = await ocrSingleImage(blob, myToken);
+              if(ocrText && ocrText.trim()) pageText = ocrText.trim();
+            }
+          }catch(ocrPageErr){ /* Seite bleibt ggf. leer, kein harter Abbruch */ }
+        }
         fullText += pageText + "\n\n";
       }
       if(myToken !== processingToken) return;
@@ -1030,7 +1343,8 @@
       title, rawText: text,
       theme: settings.theme, mode: settings.mode, fontSize: settings.fontSize,
       currentPage: 0, createdAt: new Date().toISOString(),
-      pagesFlip: null, pagesFlipMeta: null
+      pagesFlip: null, pagesFlipMeta: null,
+      category: "", coverImage: null, notes: {}
     };
     books.push(book);
     saveBooks(books);
@@ -1094,13 +1408,14 @@
   }
 
   function fontFamilyFor(theme){
-    return theme === "paper" ? "'New York','Iowan Old Style','Palatino',Georgia,serif" : "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif";
+    return (theme === "paper" || theme === "sepia") ? "'New York','Iowan Old Style','Palatino',Georgia,serif" : "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif";
   }
 
   /* ---------------- Reader state ---------------- */
   let currentBook = null;
 
   function openReader(bookId){
+    stopTTS();
     currentBook = books.find(b=>b.id===bookId);
     if(!currentBook) return;
     settings.theme = currentBook.theme || settings.theme;
@@ -1112,7 +1427,15 @@
     requestAnimationFrame(()=>{ requestAnimationFrame(rebuildPagination); });
   }
 
+  function stopTTS(){
+    if("speechSynthesis" in window){ try{ window.speechSynthesis.cancel(); }catch(e){} }
+    ttsSpeaking = false;
+    const btn = document.getElementById("btn-tts");
+    if(btn) btn.textContent = "🔊";
+  }
+
   document.getElementById("btn-reader-back").addEventListener("click",()=>{
+    stopTTS();
     persistBookProgress();
     showView("view-library");
     renderShelf();
@@ -1177,7 +1500,7 @@
     contentEl.style.fontSize = settings.fontSize+"px";
     contentEl.style.fontFamily = fontFamilyFor(settings.theme);
     contentEl.textContent = pages[i];
-    document.getElementById("page-num-flip").textContent = (i+1)+" / "+pages.length;
+    document.getElementById("page-num-flip").textContent = (i+1)+" / "+pages.length + (currentBook.notes && currentBook.notes[i] ? "  📝" : "");
     document.getElementById("tap-left").style.visibility = i>0 ? "visible" : "hidden";
     document.getElementById("tap-right").style.visibility = i<pages.length-1 ? "visible" : "hidden";
     updateIndicator();
@@ -1186,6 +1509,8 @@
   function flipTo(newIndex, direction){
     const pages = currentBook.pagesFlip || [""];
     if(newIndex < 0 || newIndex > pages.length-1) return;
+    stopTTS();
+    if(navigator.vibrate){ try{ navigator.vibrate(8); }catch(e){} }
     const viewport = document.getElementById("book-viewport");
 
     const clone = document.createElement("div");
@@ -1332,7 +1657,12 @@
   function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
   function searchEmptyStateHTML(msg){
-    return `<div class="search-empty">${escapeHtml(msg)}</div>`;
+    const hist = loadSearchHistory();
+    let histHtml = "";
+    if(hist.length){
+      histHtml = `<div style="padding:4px 16px 0;"><div class="section-header" style="padding:8px 4px;">LETZTE SUCHEN</div><div class="filter-row" style="padding:0 4px;">${hist.map(h=>`<button class="filter-chip history-chip" data-q="${escapeHtml(h)}">${escapeHtml(h)}</button>`).join("")}</div></div>`;
+    }
+    return `<div class="search-empty">${escapeHtml(msg)}</div>${histHtml}`;
   }
 
   function openSearch(){
@@ -1340,8 +1670,19 @@
     input.value = "";
     document.getElementById("search-clear").style.display = "none";
     document.getElementById("search-results").innerHTML = searchEmptyStateHTML("Nach Wörtern oder Textstellen im Buch suchen.");
+    wireHistoryChips();
     showView("view-search");
     setTimeout(()=>input.focus(), 60);
+  }
+  function wireHistoryChips(){
+    document.querySelectorAll(".history-chip").forEach(chip=>{
+      chip.addEventListener("click", ()=>{
+        const q = chip.dataset.q;
+        document.getElementById("search-input").value = q;
+        document.getElementById("search-clear").style.display = "flex";
+        runSearch(q);
+      });
+    });
   }
 
   function runSearch(query){
@@ -1349,6 +1690,7 @@
     const q = query.trim();
     if(!q){
       resultsEl.innerHTML = searchEmptyStateHTML("Nach Wörtern oder Textstellen im Buch suchen.");
+      wireHistoryChips();
       return;
     }
     const pages = (currentBook && currentBook.pagesFlip) || [];
@@ -1400,6 +1742,7 @@
   }
 
   function jumpToPageFromSearch(pageIdx, query){
+    saveSearchHistoryEntry(query);
     showView("view-reader");
     if(settings.mode === "flip"){
       renderFlipPage(pageIdx);
@@ -1438,8 +1781,154 @@
     input.focus();
   });
 
+  /* ---------------- Search history ---------------- */
+  function loadSearchHistory(){
+    try{ return JSON.parse(localStorage.getItem("lesestube_search_history")) || []; }catch(e){ return []; }
+  }
+  function saveSearchHistoryEntry(q){
+    if(!q || q.trim().length < 2) return;
+    let hist = loadSearchHistory().filter(h=>h.toLowerCase() !== q.toLowerCase());
+    hist.unshift(q.trim());
+    hist = hist.slice(0, 8);
+    localStorage.setItem("lesestube_search_history", JSON.stringify(hist));
+  }
+
+  /* ---------------- Chapter detection ---------------- */
+  function detectChapters(book){
+    const pages = book.pagesFlip || [];
+    const chapters = [];
+    pages.forEach((pageText, idx)=>{
+      pageText.split(/\n+/).forEach(line=>{
+        const t = line.trim();
+        if(t.length >= 3 && t.length <= 60){
+          const letters = t.replace(/[^\p{L}]/gu, "");
+          const upper = letters.replace(/[^\p{Lu}]/gu, "");
+          if(letters.length >= 3 && upper.length / letters.length > 0.8 && !/[.,;:]$/.test(t)){
+            if(!chapters.some(c=>c.pageIndex===idx)) chapters.push({title:t, pageIndex:idx});
+          }
+        }
+      });
+    });
+    return chapters;
+  }
+  document.getElementById("btn-chapters").addEventListener("click", ()=>{
+    if(!currentBook) return;
+    const chapters = detectChapters(currentBook);
+    const list = document.getElementById("chapters-list");
+    if(chapters.length === 0){
+      list.innerHTML = `<div class="search-empty" style="padding:30px 10px 10px;">Keine Kapitelüberschriften erkannt.</div>`;
+    } else {
+      list.innerHTML = chapters.map(c=>`<button class="search-result-row" data-page="${c.pageIndex}"><span class="srr-page">Seite ${c.pageIndex+1}</span><span class="srr-snippet">${escapeHtml(c.title)}</span></button>`).join("");
+      list.querySelectorAll(".search-result-row").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const idx = parseInt(btn.dataset.page,10);
+          document.getElementById("chapters-backdrop").classList.remove("show");
+          document.getElementById("chapters-sheet").classList.remove("show");
+          if(settings.mode === "flip") renderFlipPage(idx);
+          else {
+            renderScrollPages();
+            const el = document.getElementById("scrollpage");
+            const target = el.querySelectorAll(".sp-page")[idx];
+            if(target) target.scrollIntoView({block:"start"});
+            currentBook.currentPage = idx;
+            updateIndicator();
+          }
+        });
+      });
+    }
+    document.getElementById("chapters-backdrop").classList.add("show");
+    document.getElementById("chapters-sheet").classList.add("show");
+  });
+  document.getElementById("chapters-backdrop").addEventListener("click", ()=>{
+    document.getElementById("chapters-backdrop").classList.remove("show");
+    document.getElementById("chapters-sheet").classList.remove("show");
+  });
+
+  /* ---------------- Vorlesen (Text-to-Speech) ---------------- */
+  let ttsSpeaking = false;
+  function currentPageText(){
+    if(!currentBook) return "";
+    const pages = currentBook.pagesFlip || [""];
+    return pages[currentBook.currentPage] || "";
+  }
+  document.getElementById("btn-tts").addEventListener("click", ()=>{
+    if(!("speechSynthesis" in window)){
+      showAlertModal("Vorlesen wird von diesem Browser leider nicht unterstützt.");
+      return;
+    }
+    if(ttsSpeaking){
+      window.speechSynthesis.cancel();
+      ttsSpeaking = false;
+      document.getElementById("btn-tts").textContent = "🔊";
+      return;
+    }
+    const text = currentPageText();
+    if(!text){ showAlertModal("Diese Seite enthält keinen Text zum Vorlesen."); return; }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.onend = ()=>{ ttsSpeaking = false; document.getElementById("btn-tts").textContent = "🔊"; };
+    utter.onerror = ()=>{ ttsSpeaking = false; document.getElementById("btn-tts").textContent = "🔊"; };
+    window.speechSynthesis.speak(utter);
+    ttsSpeaking = true;
+    document.getElementById("btn-tts").textContent = "⏹️";
+  });
+
+  /* ---------------- Page notes ---------------- */
+  document.getElementById("btn-note").addEventListener("click", ()=>{
+    if(!currentBook) return;
+    if(!currentBook.notes) currentBook.notes = {};
+    document.getElementById("note-input").value = currentBook.notes[currentBook.currentPage] || "";
+    document.getElementById("note-backdrop").classList.add("show");
+    document.getElementById("note-sheet").classList.add("show");
+  });
+  document.getElementById("note-backdrop").addEventListener("click", ()=>{
+    document.getElementById("note-backdrop").classList.remove("show");
+    document.getElementById("note-sheet").classList.remove("show");
+  });
+  document.getElementById("btn-note-save").addEventListener("click", ()=>{
+    if(!currentBook) return;
+    const v = document.getElementById("note-input").value.trim();
+    if(!currentBook.notes) currentBook.notes = {};
+    if(v) currentBook.notes[currentBook.currentPage] = v;
+    else delete currentBook.notes[currentBook.currentPage];
+    persistBookProgress();
+    if(settings.mode === "flip") renderFlipPage(currentBook.currentPage);
+    document.getElementById("note-backdrop").classList.remove("show");
+    document.getElementById("note-sheet").classList.remove("show");
+  });
+  document.getElementById("btn-note-delete").addEventListener("click", ()=>{
+    if(!currentBook) return;
+    if(currentBook.notes) delete currentBook.notes[currentBook.currentPage];
+    persistBookProgress();
+    if(settings.mode === "flip") renderFlipPage(currentBook.currentPage);
+    document.getElementById("note-backdrop").classList.remove("show");
+    document.getElementById("note-sheet").classList.remove("show");
+  });
+
   /* ---------------- Init ---------------- */
   renderShelf();
+
+  /* ---------------- Offline-Fähigkeit (PWA) ---------------- */
+  if("serviceWorker" in navigator){
+    try{
+      const swCode = `
+        const CACHE = "lesestube-v1";
+        self.addEventListener("install", e => self.skipWaiting());
+        self.addEventListener("activate", e => self.clients.claim());
+        self.addEventListener("fetch", e => {
+          if(e.request.method !== "GET") return;
+          e.respondWith(
+            fetch(e.request).then(resp => {
+              const clone = resp.clone();
+              caches.open(CACHE).then(c => c.put(e.request, clone)).catch(()=>{});
+              return resp;
+            }).catch(() => caches.match(e.request))
+          );
+        });
+      `;
+      const swBlob = new Blob([swCode], {type:"text/javascript"});
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+    }catch(e){ /* Offline-Modus einfach nicht verfügbar, kein harter Fehler */ }
+  }
 })();
 </script>
 </body>
