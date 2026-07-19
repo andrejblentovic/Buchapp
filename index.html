@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>Lesestube</title>
+<title>Book-Zapp</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Lesestube">
+<meta name="apple-mobile-web-app-title" content="Book-Zapp">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#E2682A">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -238,7 +238,7 @@
   .back-btn{ border:none; background:transparent; color:var(--ios-blue); font-size:17px; padding:6px 8px 6px 4px; display:flex; align-items:center; gap:2px; cursor:pointer; }
   mark{ background:rgba(185,138,60,0.42); color:inherit; border-radius:3px; padding:0 1px; }
 
-  .book-viewport{ flex:1; margin:12px 18px 4px; perspective:1800px; position:relative; }
+  .book-viewport{ flex:1; margin:clamp(10px,2.8vw,18px) clamp(14px,4.5vw,26px) clamp(4px,1vw,8px); perspective:1800px; position:relative; }
   .book-shell{ position:absolute; inset:0; border-radius:var(--radius-page); box-shadow:0 22px 44px -14px var(--shadow), 0 2px 6px rgba(0,0,0,0.14); background:var(--page-bg-2); }
   .book-shell::before{ /* stacked page edges */
     content:""; position:absolute; right:-4px; top:6px; bottom:6px; width:4px;
@@ -255,7 +255,7 @@
   .tapzone{ position:absolute; top:0; bottom:0; width:32%; z-index:4; }
   .tapzone.left{ left:0; } .tapzone.right{ right:0; }
 
-  .scrollpage{ flex:1; margin:12px 18px 4px; border-radius:var(--radius-page); background:var(--page-bg); box-shadow:0 22px 44px -14px var(--shadow); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .scrollpage{ flex:1; margin:clamp(10px,2.8vw,18px) clamp(14px,4.5vw,26px) clamp(4px,1vw,8px); border-radius:var(--radius-page); background:var(--page-bg); box-shadow:0 22px 44px -14px var(--shadow); overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .scrollpage .sp-page{ padding:32px 26px; font-family:var(--font-body); color:var(--ink); line-height:1.5; white-space:pre-wrap; border-bottom:1px dashed var(--line); }
   .scrollpage .sp-page:last-child{ border-bottom:none; }
   .scrollpage .sp-num{ text-align:center; font-size:11px; letter-spacing:.06em; color:var(--ink-soft); margin-top:14px; font-family:var(--sf); }
@@ -309,6 +309,20 @@
 </style>
 </head>
 <body>
+<div id="auth-screen" style="position:fixed; inset:0; z-index:9999; background:var(--ios-bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px;">
+  <div style="width:100%; max-width:340px;">
+    <div style="font-family:var(--serif); font-size:32px; font-weight:700; text-align:center; margin-bottom:6px; color:var(--ios-label);">Book-Zapp</div>
+    <div id="auth-subtitle" style="text-align:center; color:var(--ios-secondary); font-size:14px; margin-bottom:24px;">Melde dich an, um deine Bücher zu sehen</div>
+
+    <input type="email" id="auth-email" class="textinput" placeholder="E-Mail" autocomplete="email" style="width:100%; margin-bottom:10px;">
+    <input type="password" id="auth-password" class="textinput" placeholder="Passwort" autocomplete="current-password" style="width:100%; margin-bottom:10px;">
+
+    <p id="auth-error" style="display:none; color:var(--ios-red); font-size:13px; margin:0 2px 10px;"></p>
+
+    <button class="bigbtn" id="auth-submit" style="width:100%;">Einloggen</button>
+    <button class="ghostbtn" id="auth-toggle" style="width:100%; padding:12px; margin-top:8px;">Noch kein Konto? Registrieren</button>
+  </div>
+</div>
 <div id="app">
 
   <!-- LIBRARY -->
@@ -386,7 +400,7 @@
         </div>
       </div>
       <textarea class="textinput" id="input-text" placeholder="Text hier einfügen oder eintippen…"></textarea>
-      <div style="font-size:11px; color:var(--ios-secondary); padding:6px 2px 0; line-height:1.4;">Tipp: Tippe "➕ Seitenumbruch" an der Stelle, an der eine neue Seite beginnen soll — oder schreib selbst eine Zeile mit nur <code>===</code>.</div>
+      <div style="font-size:11px; color:var(--ios-secondary); padding:6px 2px 0; line-height:1.4;">Tipp: Tippe "➕ Seitenumbruch" für eine neue Seite — mit Titel wird daraus ein echter, benannter Abschnitt (in ☰ sichtbar). Manuell geht auch: Zeile mit nur <code>===</code>, oder <code>=== Titel ===</code>.</div>
       <div class="row-end">
         <button class="bigbtn" id="btn-save-text">Als Buch sichern</button>
       </div>
@@ -489,7 +503,7 @@
     </div>
     <div class="panel active" style="padding:10px 16px 18px;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px;">
-        <div style="font-size:11px; color:var(--ios-secondary); line-height:1.4;">Zeile mit nur <code>===</code> = neue Seite</div>
+        <div style="font-size:11px; color:var(--ios-secondary); line-height:1.4;"><code>=== Titel ===</code> = benannter Abschnitt</div>
         <button type="button" id="btn-pagebreak-edit" style="border:none; background:var(--ios-fill); color:var(--ios-blue); font-size:12px; font-weight:600; padding:6px 10px; border-radius:20px; cursor:pointer; white-space:nowrap;">➕ Seitenumbruch</button>
       </div>
       <textarea class="textinput" id="edit-text-textarea" style="flex:1; width:100%;"></textarea>
@@ -615,7 +629,9 @@
   <button class="ghostbtn" id="btn-import" style="width:100%; padding:14px; margin-bottom:10px;">⬆️ Aus Datei wiederherstellen</button>
   <button class="ghostbtn" id="btn-open-trash" style="width:100%; padding:14px;">🗑️ Papierkorb</button>
   <button class="ghostbtn" id="btn-open-stats" style="width:100%; padding:14px; margin-top:10px;">📊 Lesestatistik</button>
-  <p style="font-size:12px; color:var(--ios-secondary); margin:14px 2px 4px; line-height:1.4;">Deine Bücher sind nur auf diesem Gerät gespeichert. Exportiere regelmäßig eine Sicherung, besonders vor einem Gerätewechsel.</p>
+  <button class="ghostbtn" id="btn-logout" style="width:100%; padding:14px; margin-top:10px; color:var(--ios-red);">🚪 Abmelden</button>
+  <p style="font-size:12px; color:var(--ios-secondary); margin:14px 2px 4px; line-height:1.4;">Deine Bücher werden lokal und in der Cloud gespeichert. Exportiere trotzdem regelmäßig eine Sicherung.</p>
+  <p style="font-size:11px; color:var(--ios-tertiary); margin:4px 2px 0; text-align:center;" id="version-label"></p>
 </div>
 
 <!-- STATS -->
@@ -652,7 +668,7 @@
 <div class="sheet-backdrop" id="chapters-backdrop"></div>
 <div class="sheet" id="chapters-sheet">
   <div class="handle"></div>
-  <h3>Kapitel</h3>
+  <h3>Abschnitte & Kapitel</h3>
   <div id="chapters-list" style="max-height:50vh; overflow-y:auto;"></div>
 </div>
 
@@ -793,6 +809,7 @@
     miniTitle.textContent = "Umbenennen";
     miniInput.style.display = "block";
     miniInput.value = currentTitle;
+    miniInput.placeholder = "";
     miniMessage.style.display = "none";
     miniCancelBtn.style.display = "";
     miniConfirmBtn.textContent = "Sichern";
@@ -811,6 +828,22 @@
     };
     miniBackdrop.classList.add("show"); miniSheet.classList.add("show");
     setTimeout(()=>{ miniInput.focus(); miniInput.select(); }, 60);
+  }
+  function showTextPromptModal(title, placeholder, confirmLabel, onConfirm){
+    miniTitle.textContent = title;
+    miniInput.style.display = "block";
+    miniInput.value = "";
+    miniInput.placeholder = placeholder || "";
+    miniMessage.style.display = "none";
+    miniCancelBtn.style.display = "";
+    document.getElementById("mini-category-wrap").style.display = "none";
+    miniConfirmBtn.textContent = confirmLabel || "OK";
+    miniConfirmBtn.classList.remove("navbtn"); miniConfirmBtn.style.color = "";
+    miniOnConfirm = ()=>{
+      onConfirm(miniInput.value.trim()); // darf leer sein
+    };
+    miniBackdrop.classList.add("show"); miniSheet.classList.add("show");
+    setTimeout(()=>{ miniInput.focus(); }, 60);
   }
   function showConfirmModal(message, confirmLabel, onConfirm){
     miniTitle.textContent = "Bestätigen";
@@ -845,10 +878,13 @@
     if(e.key === "Enter"){ e.preventDefault(); miniConfirmBtn.click(); }
   });
 
+  /* ---------------- Version ---------------- */
+  const APP_VERSION = "1.0.0";
+
   /* ---------------- Storage ---------------- */
-  const LS_BOOKS = "lesestube_books_v1";
-  const LS_SETTINGS = "lesestube_settings_v1";
-  const LS_TRASH = "lesestube_trash_v1";
+  const LS_BOOKS = "book_zapp_books_v1";
+  const LS_SETTINGS = "book_zapp_settings_v1";
+  const LS_TRASH = "book_zapp_trash_v1";
   const TRASH_RETENTION_DAYS = 7;
 
   function loadTrash(){
@@ -896,6 +932,7 @@
   function saveBooks(books){
     try{
       localStorage.setItem(LS_BOOKS, JSON.stringify(books));
+      scheduleCloudSync(books);
       return true;
     }catch(e){
       dlog("❌ saveBooks() FEHLGESCHLAGEN: " + ((e&&e.name)||"") + " " + ((e&&e.message)||e));
@@ -904,8 +941,120 @@
     }
   }
 
+  /* ---------------- Cloud-Sync (Cloudflare D1) ---------------- */
+  let cloudSyncTimer = null;
+  let currentUserEmail = null;
+
+  async function checkAuth(){
+    try{
+      const res = await fetch("/api/me");
+      if(res.ok){
+        const info = await res.json();
+        return info.email || null;
+      }
+      return null;
+    }catch(e){ return null; }
+  }
+
+  async function authSubmit(mode, email, password){
+    const res = await fetch("/api/" + mode, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ email, password })
+    });
+    const info = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(info.error || "Unbekannter Fehler");
+    return info.email;
+  }
+
+  async function doLogout(){
+    try{ await fetch("/api/logout", { method: "POST" }); }catch(e){}
+    location.reload();
+  }
+
+  function initAuthScreen(onSuccess){
+    let mode = "login"; // oder "register"
+    const emailEl = document.getElementById("auth-email");
+    const passEl = document.getElementById("auth-password");
+    const errEl = document.getElementById("auth-error");
+    const submitBtn = document.getElementById("auth-submit");
+    const toggleBtn = document.getElementById("auth-toggle");
+    const subtitleEl = document.getElementById("auth-subtitle");
+
+    function render(){
+      submitBtn.textContent = mode === "login" ? "Einloggen" : "Konto erstellen";
+      toggleBtn.textContent = mode === "login" ? "Noch kein Konto? Registrieren" : "Schon registriert? Einloggen";
+      subtitleEl.textContent = mode === "login" ? "Melde dich an, um deine Bücher zu sehen" : "Neues Konto erstellen (Passwort: min. 6 Zeichen)";
+      errEl.style.display = "none";
+    }
+    render();
+
+    toggleBtn.addEventListener("click", ()=>{
+      mode = mode === "login" ? "register" : "login";
+      render();
+    });
+
+    submitBtn.addEventListener("click", async ()=>{
+      const email = emailEl.value.trim();
+      const password = passEl.value;
+      if(!email || !password){
+        errEl.textContent = "Bitte E-Mail und Passwort eingeben.";
+        errEl.style.display = "block";
+        return;
+      }
+      submitBtn.disabled = true;
+      try{
+        const gotEmail = await authSubmit(mode, email, password);
+        onSuccess(gotEmail);
+      }catch(e){
+        errEl.textContent = e.message || "Fehler bei der Anmeldung.";
+        errEl.style.display = "block";
+      }finally{
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  async function cloudFetchBooks(){
+    try{
+      const res = await fetch("/api/books");
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      return await res.json();
+    }catch(e){
+      dlog("☁️ Cloud-Laden fehlgeschlagen (evtl. offline): " + ((e&&e.message)||e));
+      return null;
+    }
+  }
+
+  async function cloudPushBooks(booksToSync){
+    try{
+      const res = await fetch("/api/books", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(booksToSync)
+      });
+      if(!res.ok){
+        const info = await res.json().catch(()=>({}));
+        throw new Error(info.error || ("HTTP "+res.status));
+      }
+      dlog("☁️ Cloud-Sync erfolgreich (" + booksToSync.length + " Bücher).");
+      return true;
+    }catch(e){
+      dlog("☁️ Cloud-Speichern fehlgeschlagen: " + ((e&&e.message)||e));
+      return false;
+    }
+  }
+
+  function scheduleCloudSync(booksToSync){
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(()=>{ cloudPushBooks(booksToSync); }, 800);
+  }
+
   function loadSettings(){
-    const defaults = {theme:"paper", mode:"flip", fontSize:18, fontFamily:"", lineHeight:1.5, margin:26};
+    // Sinnvoller Start-Innenabstand je nach Bildschirmbreite (nur relevant, bevor eigene Werte gespeichert sind)
+    const screenW = window.innerWidth || 390;
+    const smartMargin = Math.round(Math.max(20, Math.min(34, screenW * 0.068)));
+    const defaults = {theme:"paper", mode:"flip", fontSize:18, fontFamily:"", lineHeight:1.5, margin:smartMargin};
     try{
       return Object.assign({}, defaults, JSON.parse(localStorage.getItem(LS_SETTINGS)) || {});
     }catch(e){ return defaults; }
@@ -926,7 +1075,7 @@
   const shelf = document.getElementById("shelf");
   let shelfEditing = false;
   let activeFilterCategory = "__all__";
-  let sortMode = localStorage.getItem("lesestube_sort") || "recent";
+  let sortMode = localStorage.getItem("book_zapp_sort") || "recent";
   let pendingCoverBookId = null;
 
   const COVER_PALETTES = {
@@ -1197,7 +1346,7 @@
   document.getElementById("seg-sort").addEventListener("click", e=>{
     const btn = e.target.closest("button"); if(!btn) return;
     sortMode = btn.dataset.val;
-    localStorage.setItem("lesestube_sort", sortMode);
+    localStorage.setItem("book_zapp_sort", sortMode);
     renderShelf();
     sortBackdrop.classList.remove("show"); sortSheet.classList.remove("show");
   });
@@ -1206,10 +1355,10 @@
   const backupBackdrop = document.getElementById("backup-backdrop");
   const backupSheet = document.getElementById("backup-sheet");
   function loadStats(){
-    try{ return Object.assign({dates:[], totalPages:0}, JSON.parse(localStorage.getItem("lesestube_stats_v1")) || {}); }
+    try{ return Object.assign({dates:[], totalPages:0}, JSON.parse(localStorage.getItem("book_zapp_stats_v1")) || {}); }
     catch(e){ return {dates:[], totalPages:0}; }
   }
-  function saveStats(s){ try{ localStorage.setItem("lesestube_stats_v1", JSON.stringify(s)); }catch(e){} }
+  function saveStats(s){ try{ localStorage.setItem("book_zapp_stats_v1", JSON.stringify(s)); }catch(e){} }
   function localDateKey(d){
     d = d || new Date();
     const y = d.getFullYear();
@@ -1295,6 +1444,9 @@
 
   const statsBackdrop = document.getElementById("stats-backdrop");
   const statsSheet = document.getElementById("stats-sheet");
+  document.getElementById("btn-logout").addEventListener("click", ()=>{
+    doLogout();
+  });
   document.getElementById("btn-open-stats").addEventListener("click", ()=>{
     backupBackdrop.classList.remove("show"); backupSheet.classList.remove("show");
     const stats = loadStats();
@@ -1316,7 +1468,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "lesestube-sicherung-" + new Date().toISOString().slice(0,10) + ".json";
+    a.download = "book-zapp-sicherung-" + new Date().toISOString().slice(0,10) + ".json";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1526,12 +1678,12 @@
     return (result.data.text || "").trim();
   }
 
-  let ocrLang = localStorage.getItem("lesestube_ocr_lang") || "hrv+deu+eng";
+  let ocrLang = localStorage.getItem("book_zapp_ocr_lang") || "hrv+deu+eng";
   document.getElementById("seg-ocr-lang").querySelectorAll("button").forEach(b=>b.classList.toggle("active", b.dataset.val===ocrLang));
   document.getElementById("seg-ocr-lang").addEventListener("click", e=>{
     const btn = e.target.closest("button"); if(!btn) return;
     ocrLang = btn.dataset.val;
-    localStorage.setItem("lesestube_ocr_lang", ocrLang);
+    localStorage.setItem("book_zapp_ocr_lang", ocrLang);
     document.getElementById("seg-ocr-lang").querySelectorAll("button").forEach(b=>b.classList.toggle("active", b===btn));
   });
 
@@ -1683,27 +1835,28 @@
 
   /* ---------------- Direct text ---------------- */
   /* ---------------- Manueller Seitenumbruch einfügen ---------------- */
-  function insertAtCursor(textarea, insertText){
+  function insertAtCursor(textarea, title){
     const start = textarea.selectionStart != null ? textarea.selectionStart : textarea.value.length;
     const end = textarea.selectionEnd != null ? textarea.selectionEnd : textarea.value.length;
     const before = textarea.value.slice(0, start);
     const after = textarea.value.slice(end);
     const needsLeadingBreak = before.length > 0 && !before.endsWith("\n");
     const needsTrailingBreak = after.length > 0 && !after.startsWith("\n");
-    const insert = (needsLeadingBreak ? "\n\n" : "\n") + "===" + (needsTrailingBreak ? "\n\n" : "\n");
+    const marker = title ? ("=== " + title.trim() + " ===") : "===";
+    const insert = (needsLeadingBreak ? "\n\n" : "\n") + marker + (needsTrailingBreak ? "\n\n" : "\n");
     textarea.value = before + insert + after;
     const newPos = (before + insert).length;
     textarea.focus();
     textarea.setSelectionRange(newPos, newPos);
   }
   document.getElementById("btn-pagebreak-text").addEventListener("click", ()=>{
-    showConfirmModal("An dieser Stelle einen Seitenumbruch einfügen?", "Einfügen", ()=>{
-      insertAtCursor(document.getElementById("input-text"), "");
+    showTextPromptModal("Neue Seite / Abschnitt", "Titel (optional, leer = nur Seitenumbruch)", "Einfügen", (title)=>{
+      insertAtCursor(document.getElementById("input-text"), title);
     });
   });
   document.getElementById("btn-pagebreak-edit").addEventListener("click", ()=>{
-    showConfirmModal("An dieser Stelle einen Seitenumbruch einfügen?", "Einfügen", ()=>{
-      insertAtCursor(document.getElementById("edit-text-textarea"), "");
+    showTextPromptModal("Neue Seite / Abschnitt", "Titel (optional, leer = nur Seitenumbruch)", "Einfügen", (title)=>{
+      insertAtCursor(document.getElementById("edit-text-textarea"), title);
     });
   });
 
@@ -1780,22 +1933,34 @@
     return out;
   }
 
-  function splitManualPages(text){
+  function parseMarkerLine(line){
+    const m = /^\s*={3,}(.*)$/.exec(line);
+    if(!m) return null;
+    let title = m[1].trim();
+    title = title.replace(/=+$/,"").trim();
+    return title; // "" = unbenannter Umbruch, sonst der Abschnitts-Titel
+  }
+  function splitManualPagesWithTitles(text){
     const lines = text.split("\n");
     const segments = [];
     let current = [];
+    let currentTitle = null;
     for(const line of lines){
-      if(/^\s*={3,}\s*$/.test(line)){
-        segments.push(current.join("\n"));
+      const markerTitle = parseMarkerLine(line);
+      if(markerTitle !== null){
+        segments.push({text: current.join("\n").trim(), title: currentTitle});
         current = [];
+        currentTitle = markerTitle || null;
       } else {
         current.push(line);
       }
     }
-    segments.push(current.join("\n"));
-    const trimmed = segments.map(s=>s.trim());
-    const nonEmpty = trimmed.filter(s=>s.length>0);
-    return nonEmpty.length ? nonEmpty : [""];
+    segments.push({text: current.join("\n").trim(), title: currentTitle});
+    const nonEmpty = segments.filter(s=>s.text.length>0);
+    return nonEmpty.length ? nonEmpty : [{text:"", title:null}];
+  }
+  function splitManualPages(text){
+    return splitManualPagesWithTitles(text).map(s=>s.text);
   }
 
   function paginateSegment(text, width, height, fontSize, fontFamily, padding){
@@ -1827,12 +1992,16 @@
   }
 
   function paginate(text, width, height, fontSize, fontFamily, padding){
-    const segments = splitManualPages(text);
+    const segs = splitManualPagesWithTitles(text);
     let pages = [];
-    for(const seg of segments){
-      pages = pages.concat(paginateSegment(seg, width, height, fontSize, fontFamily, padding));
+    const sections = [];
+    for(const seg of segs){
+      if(seg.title){
+        sections.push({title: seg.title, pageIndex: pages.length});
+      }
+      pages = pages.concat(paginateSegment(seg.text, width, height, fontSize, fontFamily, padding));
     }
-    return pages.length ? pages : [""];
+    return {pages: pages.length ? pages : [""], sections};
   }
 
   function fontFamilyFor(theme){
@@ -1913,7 +2082,7 @@
     // Wichtig: da box-sizing:border-box gilt, wird das Padding (unten übergeben)
     // bereits automatisch von width/height abgezogen. Hier NICHT nochmal abziehen —
     // sonst wird der Innenabstand doppelt gerechnet und die Seite unnötig verkleinert.
-    const pages = paginate(
+    const result = paginate(
       currentBook.rawText,
       Math.max(rect.width, 100),
       Math.max(rect.height, 100),
@@ -1921,9 +2090,12 @@
       fontFamilyFor(settings.theme),
       padTop + "px " + m + "px " + padBottom + "px"
     );
+    const pages = result.pages;
     dlog("Ergebnis: " + pages.length + " Seiten. Zeichen pro Seite (erste 6): " + pages.slice(0,6).map(p=>p.length).join(", "));
+    if(result.sections.length) dlog("Benannte Abschnitte: " + result.sections.map(s=>`"${s.title}"@Seite${s.pageIndex+1}`).join(", "));
     if(pages[2]) dlog("Seite 3 Inhalt (Ende): " + JSON.stringify(pages[2].slice(-60)));
     currentBook.pagesFlip = pages;
+    currentBook.sections = result.sections;
     if(currentBook.currentPage >= pages.length) currentBook.currentPage = pages.length - 1;
     if(currentBook.currentPage < 0) currentBook.currentPage = 0;
     applyMode();
@@ -2077,10 +2249,13 @@
     };
   }
 
+  let resizeDebounce = null;
   window.addEventListener("resize", ()=>{
-    if(document.getElementById("view-reader").classList.contains("active")){
-      rebuildPagination();
-    }
+    if(!document.getElementById("view-reader").classList.contains("active")) return;
+    clearTimeout(resizeDebounce);
+    resizeDebounce = setTimeout(()=>{
+      requestAnimationFrame(rebuildPagination);
+    }, 150);
   });
 
   /* ---------------- Settings sheet ---------------- */
@@ -2373,14 +2548,14 @@
 
   /* ---------------- Search history ---------------- */
   function loadSearchHistory(){
-    try{ return JSON.parse(localStorage.getItem("lesestube_search_history")) || []; }catch(e){ return []; }
+    try{ return JSON.parse(localStorage.getItem("book_zapp_search_history")) || []; }catch(e){ return []; }
   }
   function saveSearchHistoryEntry(q){
     if(!q || q.trim().length < 2) return;
     let hist = loadSearchHistory().filter(h=>h.toLowerCase() !== q.toLowerCase());
     hist.unshift(q.trim());
     hist = hist.slice(0, 8);
-    localStorage.setItem("lesestube_search_history", JSON.stringify(hist));
+    localStorage.setItem("book_zapp_search_history", JSON.stringify(hist));
   }
 
   /* ---------------- Chapter detection ---------------- */
@@ -2403,12 +2578,21 @@
   }
   document.getElementById("btn-chapters").addEventListener("click", ()=>{
     if(!currentBook) return;
-    const chapters = detectChapters(currentBook);
+    const manualSections = (currentBook.sections || []).map(s=>({title:s.title, pageIndex:s.pageIndex, manual:true}));
+    const autoChapters = detectChapters(currentBook).filter(c=>!manualSections.some(m=>m.pageIndex===c.pageIndex));
+    const combined = manualSections.concat(autoChapters).sort((a,b)=>a.pageIndex-b.pageIndex);
     const list = document.getElementById("chapters-list");
-    if(chapters.length === 0){
-      list.innerHTML = `<div class="search-empty" style="padding:30px 10px 10px;">Keine Kapitelüberschriften erkannt.</div>`;
+    if(combined.length === 0){
+      list.innerHTML = `<div class="search-empty" style="padding:30px 10px 10px; line-height:1.5;">Keine Abschnitte gefunden.<br><br>Tipp: Füge beim Bearbeiten eine Zeile wie <code>=== Titel ===</code> ein, um einen benannten Abschnitt anzulegen.</div>`;
     } else {
-      list.innerHTML = chapters.map(c=>`<button class="search-result-row" data-page="${c.pageIndex}"><span class="srr-page">Seite ${c.pageIndex+1}</span><span class="srr-snippet">${escapeHtml(c.title)}</span></button>`).join("");
+      list.innerHTML = combined.map(c=>{
+        const read = (currentBook.currentPage||0) >= c.pageIndex;
+        const icon = c.manual ? "📌" : "•";
+        return `<button class="search-result-row" data-page="${c.pageIndex}">
+          <span class="srr-page">${icon} Seite ${c.pageIndex+1}${read ? " ✓ gelesen" : ""}</span>
+          <span class="srr-snippet">${escapeHtml(c.title)}</span>
+        </button>`;
+      }).join("");
       list.querySelectorAll(".search-result-row").forEach(btn=>{
         btn.addEventListener("click", ()=>{
           const idx = parseInt(btn.dataset.page,10);
@@ -2523,8 +2707,40 @@
   });
 
   /* ---------------- Init ---------------- */
-  purgeOldTrash();
-  renderShelf();
+  function startApp(){
+    document.getElementById("auth-screen").style.display = "none";
+    purgeOldTrash();
+    renderShelf();
+    dlog("Book-Zapp gestartet — Version " + APP_VERSION + (currentUserEmail ? (" — " + currentUserEmail) : ""));
+    const versionLabelEl = document.getElementById("version-label");
+    if(versionLabelEl) versionLabelEl.textContent = "Book-Zapp v" + APP_VERSION + (currentUserEmail ? (" · " + currentUserEmail) : "");
+
+    // Cloud-Stand laden. Wenn Cloud Bücher hat, diese verwenden.
+    // Wenn Cloud leer ist, aber lokal Bücher vorhanden sind (z.B. altes Gerät), einmalig hochladen.
+    cloudFetchBooks().then(cloudBooks=>{
+      if(cloudBooks && Array.isArray(cloudBooks)){
+        if(cloudBooks.length > 0){
+          books = cloudBooks;
+          localStorage.setItem(LS_BOOKS, JSON.stringify(books));
+          renderShelf();
+        } else if(books.length > 0){
+          cloudPushBooks(books);
+        }
+      }
+    });
+  }
+
+  checkAuth().then(email=>{
+    if(email){
+      currentUserEmail = email;
+      startApp();
+    }else{
+      initAuthScreen((gotEmail)=>{
+        currentUserEmail = gotEmail;
+        startApp();
+      });
+    }
+  });
 
   /* ---------------- Offline-Fähigkeit (PWA) ---------------- */
   if("serviceWorker" in navigator){
@@ -2532,7 +2748,7 @@
       // Fallback: falls sw.js nicht mit hochgeladen wurde, Inline-Version nutzen
       try{
         const swCode = `
-          const CACHE = "lesestube-v1";
+          const CACHE = "book-zapp-v1";
           self.addEventListener("install", e => self.skipWaiting());
           self.addEventListener("activate", e => self.clients.claim());
           self.addEventListener("fetch", e => {
